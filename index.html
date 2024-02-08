@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lista de Tareas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.13.1/underscore-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.4.0/backbone-min.js"></script>
+  </head>
+  <body>
+    <div id="app">
+      <div id="inputview"></div>
+    </div>
+    <script>
+      // Modelo de tarea
+      var TaskModel = Backbone.Model.extend({
+        defaults: {
+          title: '',
+          completed: false,
+        },
+      });
+
+      // Colección de tareas
+      var TasksCollection = Backbone.Collection.extend({
+        model: TaskModel,
+      });
+
+      // Vista de tarea individual
+      var TaskView = Backbone.View.extend({
+        tagName: 'li',
+        // Define el template directamente aquí
+        template: _.template(
+          '<input type="text" id="task" value="<%= title %>"></input>   <button type="submit" id="buttonDelete">x</button>'
+        ),
+        events: {
+          'dblclick #task': 'editTask',
+
+          'blur #task': 'close', // Salir del input para guardar
+          'click #buttonDelete': 'deleteTaskOnClick',
+        },
+        initialize: function () {
+          this.isEditing = false;
+          this.listenTo(this.model, 'change', this.render);
+        },
+        render: function () {
+          var disabled = this.isEditing ? '' : 'disabled';
+          this.$el.html(this.template(this.model.toJSON()));
+          this.$('#task').prop('disabled', disabled);
+          return this;
+        },
+        deleteTaskOnClick: function () {
+          this.model.destroy();
+          this.remove();
+        },
+        editTask: function () {
+          this.isEditing = true;
+          console.log('pepe');
+          this.render();
+        },
+        close: function () {
+          var value = this.$('#task').val().trim();
+          if (value) {
+            this.model.set('title', value);
+            this.model.save(); // Guardar cambios en el modelo
+          }
+          this.isEditing = false;
+          this.render(); // Remover clase de edición
+        },
+      });
+
+      // Vista de lista de tareas
+      var TasksView = Backbone.View.extend({
+        tagName: 'ul',
+        initialize: function () {
+          this.listenTo(this.collection, 'add', this.renderTask);
+        },
+        render: function () {
+          this.$el.html(
+            '<input type="text" id="inputTask" placeholder="Add Task ..."></input>     <button type="submit" id="buttonTask">+</button>'
+          );
+          this.collection.each(this.renderTask, this);
+          return this;
+        },
+        renderTask: function (task) {
+          var taskView = new TaskView({ model: task });
+          this.$el.append(taskView.render().el);
+        },
+        events: {
+          'keypress #inputTask': 'createTaskOnEnter',
+          'click #buttonTask': 'createTaskOnClick',
+        },
+        createTaskOnEnter: function (e) {
+          if (e.which === 13) {
+            var newTaskTitle = $('#inputTask').val().trim();
+            if (newTaskTitle) {
+              this.collection.add({ title: newTaskTitle });
+              $('#inputTask').val('');
+            }
+          }
+        },
+        createTaskOnClick: function () {
+          var newTaskTitle = $('#inputTask').val().trim();
+          if (newTaskTitle) {
+            this.collection.add({ title: newTaskTitle });
+            $('#inputTask').val('');
+          }
+        },
+      });
+
+      // Inicialización de la aplicación
+      $(document).ready(function () {
+        var tasksCollection = new TasksCollection();
+
+        var tasksView = new TasksView({ collection: tasksCollection });
+
+        $('#app').html(tasksView.render().el);
+      });
+    </script>
+  </body>
+</html>
