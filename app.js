@@ -1,95 +1,112 @@
-console.log('holaaa');
-
-// Definimos el modelo
-var ItemModel = Backbone.Model.extend({
-  defaults: {     
-    name: '',
-    age: 0,
-    city: ''
-  }
-})
-console.log(Backbone.Model);
-// Definimos la vista
-var ItemView = Backbone.View.extend({
-  tagName: 'tr',
-  template: _.template($('#item-template').html()),
-
-  events: {
-    'click .delete': 'deleteItem'
+ // Modelo de tarea
+ var TaskModel = Backbone.Model.extend({
+  urlRoot: '/tasks',
+  defaults: {
+    title: '',
   },
-
-  render: function(){
-    this.$el.html(this.template(this.model.toJSON()));
-    return this;
-  },
-
-  deleteItem: function(){
-    this.model.destroy(); 
-    this.remove();
-  }
 });
 
-// Creamos una colección
-var ItemCollection = Backbone.Collection.extend({
-  model: ItemModel
-})
+// Colección de tareas
+var TasksCollection = Backbone.Collection.extend({
+  model: TaskModel,
+});
 
-// Instanciamos la colección  (instancia de la collection)
-var items = new ItemCollection();
-
-//creamos algunos datos de ejemplo
-
-items.add([
-  { name: 'Leon Stefano', age: 21, city: 'chacabuco'},
-  { name: 'juan Stefano', age: 50, city: 'chacabuco'},
-  { name: 'nicolas Stefano', age: 20, city: 'chacabuco'},
-])
-
-// Creamos la vista principal que contiene la tabla y los botones
-var AppView = Backbone.View.extend({
-  el: '#app',
-
-  initialize: function(){
-    this.render();
+// Vista de tarea individual
+var TaskView = Backbone.View.extend({
+  tagName: 'li',
+  // Define el template directamente aquí
+  template: _.template(
+    '<div><input type="text" id="task" value="<%= title %>"></input>   <button type="submit" id="buttonDelete">x</button></div>'
+  ),
+  events: {
+    'dblclick #task': 'editTask',
+    'keypress #task': 'editTaskOnEnter',
+    'blur #task': 'close', // Salir del input para guardar
+    'click #buttonDelete': 'deleteTaskOnClick',
   },
-
-  render: function(){
-    var self = this;
-
-    //renderizamos la tabla
-    var $table = $('<table>');
-    this.collection.each(function(item){
-      var itemView = new ItemView({model: item});
-      $table.append(itemView.render().el);
-    });
-
-    //creamos un boton para agregar elementos
-    var $addButton = $('<button>Add Item</button>').click(function(){
-      self.addItem()
-    });
-
-    //lo añadimos al dom
-    this.$el.empty().append($table).append($addButton);
+  initialize: function () {
+    this.isEditing = false;
+    this.listenTo(this.model, 'change', this.render);
+  },
+  render: function () {
+    var readonly = this.isEditing ? '' : 'readonly';
+    this.$el.html(this.template(this.model.toJSON()));
+    this.$('#task').prop('readonly', readonly);
     return this;
   },
-
-  addItem: function(){
-    var name = prompt('enter person name:');
-    var age = prompt('enter person age:');
-    var city = prompt('enter person city:');
-    if (name && age && city) {
-      this.collection.add({name: name, age: age, city: city});
+  editTaskOnEnter: function (e) {
+    if (e.which === 13) {
+      this.model.set('title', this.$('#task').val().trim());
+      this.model.save();
+      this.isEditing = false;
       this.render();
     }
-  }
+  },
+  deleteTaskOnClick: function () {
+    this.model.destroy();
+    this.remove();
+  },
+  editTask: function () {
+    this.isEditing = true;
+    this.render();
+  },
+  close: function (e) {
+    this.model.set('title', this.$('#task').val().trim());
+    this.model.save();
+    this.isEditing = false;
+    this.render();
+  },
 });
 
-// Template para los elementos de la tabla
-var itemTemplate = '<td><%= name %></td><td><%= age %></td><td><%= city %></td><td><button class="delete">Delete</button></td>';
-$(document).ready(function() {
-  $('body').append('<script type="text/template" id="item-template">' + itemTemplate + '</script>');
+// Vista de lista de tareas
+var TasksView = Backbone.View.extend({
+  tagName: 'ul',
+  initialize: function () {
+    this.listenTo(this.collection, 'add', this.renderTask);
+  },
+  template: _.template(
+    '<h1>TO DO LIST</h1>' + 
+    '<div>' +
+    '<input type="text" id="inputTask" placeholder="Add Task ..."></input>' +
+    '<button type="submit" id="buttonTask">+</button>' +
+    '</div>'
+  ),
+  render: function () {
+    this.$el.html(this.template());
+    this.collection.each(this.renderTask, this);
+    return this;
+  },
+  renderTask: function (task) {
+    var taskView = new TaskView({ model: task });
+    this.$el.append(taskView.render().el);
+  },
+  events: {
+    'keypress #inputTask': 'createTaskOnEnter',
+    'click #buttonTask': 'createTaskOnClick',
+  },
+  createTaskOnEnter: function (e) {
+    if (e.which === 13) {
+      var newTaskTitle = $('#inputTask').val().trim();
+      if (newTaskTitle) {
+        this.collection.add({ title: newTaskTitle });
+        $('#inputTask').val('');
+      }
+    }
+  },
+  createTaskOnClick: function () {
+    var newTaskTitle = $('#inputTask').val().trim();
+    if (newTaskTitle) {
+      this.collection.add({ title: newTaskTitle });
+      $('#inputTask').val('');
+    }
+  },
 });
 
-//instanciamos la vista principal
-var appView = new AppView({ collection: items});
+// Inicialización de la aplicación
+$(document).ready(function () {
+  var tasksCollection = new TasksCollection();
 
+  var tasksView = new TasksView({ collection: tasksCollection });
+
+  $('#app').html(tasksView.render().el);
+});

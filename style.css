@@ -1,0 +1,38 @@
+body {
+  background-color: rgb(63, 61, 61);
+}
+
+ul {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  list-style: none;
+}
+h1 {
+  font-family: 'Courier New', Courier, monospace;
+  margin: 0;
+  color: #979797;
+}
+#inputTask {
+  background-color: rgb(210, 210, 210);
+  margin: 2vw;
+  margin-right: 0.5vw;
+  margin-left: 0.5vw;
+  border-radius: 3px;
+  border: 1px solid white;
+}
+#buttonTask {
+  background-color: rgb(104, 136, 191);
+  border: 1px solid rgb(0, 0, 0);
+}
+#buttonDelete {
+  background-color: rgb(202, 71, 71);
+  border: 1px solid rgb(0, 0, 0);
+}
+#task {
+  background-color: rgb(210, 210, 210);
+  margin: 0.5vw;
+  border-radius: 3px;
+  border: 1px solid white;
+}
