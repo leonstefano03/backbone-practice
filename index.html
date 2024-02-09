@@ -9,15 +9,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.4.0/backbone-min.js"></script>
   </head>
   <body>
-    <div id="app">
-      <div id="inputview"></div>
-    </div>
+    <div id="app"></div>
     <script>
       // Modelo de tarea
       var TaskModel = Backbone.Model.extend({
+        urlRoot: '/tasks',
         defaults: {
           title: '',
-          completed: false,
         },
       });
 
@@ -35,7 +33,7 @@
         ),
         events: {
           'dblclick #task': 'editTask',
-
+          'keypress #task': 'editTaskOnEnter',
           'blur #task': 'close', // Salir del input para guardar
           'click #buttonDelete': 'deleteTaskOnClick',
         },
@@ -44,10 +42,18 @@
           this.listenTo(this.model, 'change', this.render);
         },
         render: function () {
-          var disabled = this.isEditing ? '' : 'disabled';
+          var readonly = this.isEditing ? '' : 'readonly';
           this.$el.html(this.template(this.model.toJSON()));
-          this.$('#task').prop('disabled', disabled);
+          this.$('#task').prop('readonly', readonly);
           return this;
+        },
+        editTaskOnEnter: function (e) {
+          if (e.which === 13) {
+            this.model.set('title', this.$('#task').val().trim());
+            this.model.save();
+            this.isEditing = false;
+            this.render();
+          }
         },
         deleteTaskOnClick: function () {
           this.model.destroy();
@@ -55,17 +61,13 @@
         },
         editTask: function () {
           this.isEditing = true;
-          console.log('pepe');
           this.render();
         },
-        close: function () {
-          var value = this.$('#task').val().trim();
-          if (value) {
-            this.model.set('title', value);
-            this.model.save(); // Guardar cambios en el modelo
-          }
+        close: function (e) {
+          this.model.set('title', this.$('#task').val().trim());
+          this.model.save();
           this.isEditing = false;
-          this.render(); // Remover clase de edición
+          this.render();
         },
       });
 
