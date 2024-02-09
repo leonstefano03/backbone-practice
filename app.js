@@ -16,7 +16,10 @@ var TaskView = Backbone.View.extend({
   tagName: 'li',
   // Define el template directamente aquí
   template: _.template(
-    '<div><input type="text" id="task" value="<%= title %>"></input>   <button type="submit" id="buttonDelete">x</button></div>'
+    '<div>' + 
+    '<input type="text" id="task" value="<%= title %>"></input>' +
+    '<button type="submit" id="buttonDelete">x</button>' +
+    '</div>'
   ),
   events: {
     'dblclick #task': 'editTask',

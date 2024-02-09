@@ -25,10 +25,12 @@ h1 {
 #buttonTask {
   background-color: rgb(104, 136, 191);
   border: 1px solid rgb(0, 0, 0);
+  border-radius: 50%;
 }
 #buttonDelete {
   background-color: rgb(202, 71, 71);
   border: 1px solid rgb(0, 0, 0);
+  border-radius: 50%;
 }
 #task {
   background-color: rgb(210, 210, 210);
